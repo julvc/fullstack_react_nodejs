@@ -1,16 +1,23 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
-  </head>
-  <body>
-    <main>
-      <h1>Giphy App</h1>
-      <section id="gifs-container"></section>
-    </main>
-    <script type="module" src="/service.js"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Giphy App</title>
+</head>
+
+<body>
+  <main>
+    <h1>Giphy App</h1>
+    <form id="search-form">
+      <input type="text" id="search-input" placeholder="Buscar gifs..." required />
+      <button type="submit">Buscar</button>
+    </form>
+    <section id="gifs-container"></section>
+  </main>
+  <script type="module" src="/service.js"></script>
+</body>
+
 </html>
