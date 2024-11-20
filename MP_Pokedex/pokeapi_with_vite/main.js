@@ -7,17 +7,54 @@ const typeFilter = document.getElementById('type-filter');
 const minWeightFilter = document.getElementById('min-weight-filter');
 const minHeightFilter = document.getElementById('min-height-filter');
 const clearButton = document.getElementById('clear-button');
-let initialPokemonList = [];
+const initialNumberForLoadingPokemons = 100;
+const minValueForSearch = 1;
+const maxValueForSearch = 1000;
+const totalListForSearchPokemons = 10000;
 
-async function getPokemonList() {
+let initialPokemonList = [];
+let fullPokemonList = [];
+
+async function getPokemonData(pokemonId) {
     try {
-        const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=3000');
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`);
+
+        if (!response.ok) throw new Error('Pokémon no encontrado');
+
+        const data = await response.json();
+        return data;
+
+    } catch (error) {
+        console.error(`Error al obtener los datos del Pokémon ${pokemonId}`, error);
+        showAlert(`Pokémon no encontrado ${pokemonId}. Por favor, intenta con otro nombre o ID.`, 'error');
+        return null;
+    }
+}
+
+function generateRandomNumbers(count, min, max) {
+    const numbers = Array.from({ length: max - min + 1 }, (_, i) => i + min);
+    const randomNumbers = numbers.sort(() => 0.5 - Math.random()).slice(0, count);
+    return randomNumbers.sort((a, b) => a - b);
+}
+
+async function loadInitialPokemons() {
+    const randomIds = generateRandomNumbers(initialNumberForLoadingPokemons, minValueForSearch,maxValueForSearch);
+    const promises = randomIds.map(id => getPokemonData(id));
+    initialPokemonList = (await Promise.all(promises)).filter(pokemon => pokemon);
+    displayInitialPokemons(initialPokemonList);
+}
+
+async function getAllPokemonList() {
+    try {
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${totalListForSearchPokemons}`);
         if (!response.ok) throw new Error('No se pudo obtener la lista de Pokémon');
         const data = await response.json();
-        const promises = data.results.map(pokemon => getPokemonDataByUrl(pokemon.url));
-        initialPokemonList = await Promise.all(promises);
 
-        displayInitialPokemons();
+        fullPokemonList = await Promise.all(
+            data.results.map(pokemon => getPokemonDataByUrl(pokemon.url))
+        );
+        console.log('Listado completo cargado:', fullPokemonList.length);
+
     } catch (error) {
         console.error('Error al obtener la lista de Pokémon:', error);
         showAlert("Error al obtener la lista de Pokémon. Inténtalo más tarde.", "warning");
@@ -116,9 +153,9 @@ function clearGrid() {
     gridLayout.innerHTML = '';
 }
 
-function displayInitialPokemons() {
+function displayInitialPokemons(pokemonList) {
     clearGrid();
-    initialPokemonList.forEach(createPokemonCard);
+    pokemonList.forEach(createPokemonCard);
 }
 
 searchInput.addEventListener('keyup', (event) => {
@@ -159,7 +196,7 @@ function filterPokemon() {
     const minWeight = parseFloat(minWeightFilter.value); 
     const minHeight = minHeightFilter.value; 
 
-    const filteredPokemons = initialPokemonList.filter(pokemon => {
+    const filteredPokemons = fullPokemonList.filter(pokemon => {
         const matchesName = pokemon.name.toLowerCase().includes(searchValue);
         const matchesType = selectedType ? pokemon.types.some(type => type.type.name === selectedType) : true;
         const matchesWeight = minWeight ? pokemon.weight >= minWeight : true;
@@ -168,8 +205,7 @@ function filterPokemon() {
         return matchesName && matchesType && matchesWeight && matchesHeight;
     });
 
-    clearGrid();
-    filteredPokemons.forEach(createPokemonCard);
+    displayInitialPokemons(filteredPokemons);
 }
 
 function clearInputs(){
@@ -177,10 +213,9 @@ function clearInputs(){
     typeFilter.value = '';
     minWeightFilter.value = '';
     minHeightFilter.value = '';
+    displayPokemons(initialPokemonList);
 }
 
-
-//applyFiltersButton.addEventListener('click', filterPokemon);
 searchButton.addEventListener('click', filterPokemon);
 searchInput.addEventListener('keyup', (event) => {
     if (event.key === 'Enter') {
@@ -188,4 +223,7 @@ searchInput.addEventListener('keyup', (event) => {
     }
 });
 clearButton.addEventListener('click', clearInputs);
-document.addEventListener('DOMContentLoaded', getPokemonList);
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadInitialPokemons(); // Cargar los primeros 100 Pokémon
+    getAllPokemonList(); // Cargar el listado completo de forma asíncrona
+});

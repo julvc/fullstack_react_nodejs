@@ -269,3 +269,9 @@ h1 {
   border-color: #ffeeba;
   color: #856404;
 }
+
+.alert-error {
+  background-color: #ea4b4b;
+  border-color: #f80000;
+  color: #e12d00;
+}
